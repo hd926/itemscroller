@@ -26,7 +26,7 @@ import fi.dy.masa.itemscroller.util.InputUtils;
 import fi.dy.masa.itemscroller.util.InventoryUtils;
 import fi.dy.masa.itemscroller.util.MoveAction;
 
-public class KeybindCallbacks implements IHotkeyCallback, IClientTickHandler
+public class KeybindCallbacks implements IHotkeyCallback
 {
     private static final KeybindCallbacks INSTANCE = new KeybindCallbacks();
 
@@ -111,11 +111,13 @@ public class KeybindCallbacks implements IHotkeyCallback, IClientTickHandler
                 final int mouseY = fi.dy.masa.malilib.util.InputUtils.getMouseY();
                 return InventoryUtils.dragMoveItems(gui, moveAction, mouseX, mouseY, true);
             }
+            /*
             else if (key == Hotkeys.KEY_MOVE_EVERYTHING.getKeybind())
             {
                 InventoryUtils.tryMoveStacks(slot, gui, false, true, false);
                 return true;
             }
+            */
             else if (key == Hotkeys.DROP_ALL_MATCHING.getKeybind())
             {
                 if (Configs.Toggles.DROP_MATCHING.getBooleanValue() &&
@@ -172,6 +174,7 @@ public class KeybindCallbacks implements IHotkeyCallback, IClientTickHandler
         return false;
     }
 
+    /*
     @Override
     public void onClientTick(MinecraftClient mc)
     {
@@ -186,7 +189,7 @@ public class KeybindCallbacks implements IHotkeyCallback, IClientTickHandler
         {
             return;
         }
-
+        
         if (GuiUtils.getCurrentScreen() instanceof HandledScreen<?> gui &&
             (GuiUtils.getCurrentScreen() instanceof CreativeInventoryScreen) == false &&
             Configs.GUI_BLACKLIST.contains(GuiUtils.getCurrentScreen().getClass().getName()) == false &&
@@ -265,4 +268,5 @@ public class KeybindCallbacks implements IHotkeyCallback, IClientTickHandler
             this.massCraftTicker = 0;
         }
     }
+    */
 }

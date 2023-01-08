@@ -271,11 +271,14 @@ public class InventoryUtils
             return false;
         }
 
+        /*
         // Move everything
         if (keyActiveMoveEverything)
         {
             tryMoveStacks(slot, gui, false, moveToOtherInventory, false);
         }
+        */
+        
         // Move all matching items
         else if (keyActiveMoveMatching)
         {
