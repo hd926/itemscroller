@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 
@@ -64,22 +65,11 @@ public class InventoryUtils
     private static int lastPosX;
     private static int lastPosY;
     private static int slotNumberLast;
-    private static boolean inhibitCraftResultUpdate;
-
-    public static void setInhibitCraftingOutputUpdate(boolean inhibitUpdate)
-    {
-        inhibitCraftResultUpdate = inhibitUpdate;
-    }
 
     public static void onSlotChangedCraftingGrid(PlayerEntity player,
                                                  CraftingInventory craftMatrix,
                                                  CraftingResultInventory inventoryCraftResult)
     {
-        if (inhibitCraftResultUpdate && Configs.Generic.MASS_CRAFT_INHIBIT_MID_UPDATES.getBooleanValue())
-        {
-            return;
-        }
-
         if (Configs.Generic.CLIENT_CRAFTING_FIX.getBooleanValue())
         {
             updateCraftingOutputSlot(player, craftMatrix, inventoryCraftResult, true);
@@ -228,10 +218,9 @@ public class InventoryUtils
         // Villager handling only happens when scrolling over the trade output slot
         boolean villagerHandling = Configs.Toggles.SCROLL_VILLAGER.getBooleanValue() && gui instanceof MerchantScreen && slot instanceof TradeOutputSlot;
         boolean craftingHandling = Configs.Toggles.CRAFTING_FEATURES.getBooleanValue() && isCraftingSlot(gui, slot);
-        boolean keyActiveMoveEverything = Hotkeys.MODIFIER_MOVE_EVERYTHING.getKeybind().isKeybindHeld();
         boolean keyActiveMoveMatching = Hotkeys.MODIFIER_MOVE_MATCHING.getKeybind().isKeybindHeld();
         boolean keyActiveMoveStacks = Hotkeys.MODIFIER_MOVE_STACK.getKeybind().isKeybindHeld();
-        boolean nonSingleMove = keyActiveMoveEverything || keyActiveMoveMatching || keyActiveMoveStacks;
+        boolean nonSingleMove = keyActiveMoveMatching || keyActiveMoveStacks;
         boolean moveToOtherInventory = scrollingUp;
 
         if (Configs.Generic.SLOT_POSITION_AWARE_SCROLL_DIRECTION.getBooleanValue())
@@ -255,7 +244,7 @@ public class InventoryUtils
 
         if (craftingHandling)
         {
-            return tryMoveItemsCrafting(recipes, slot, gui, moveToOtherInventory, keyActiveMoveStacks, keyActiveMoveEverything);
+            return tryMoveItemsCrafting(recipes, slot, gui, moveToOtherInventory, keyActiveMoveStacks, false);
         }
 
         if (villagerHandling)
@@ -265,19 +254,10 @@ public class InventoryUtils
 
         if ((Configs.Toggles.SCROLL_SINGLE.getBooleanValue() == false && nonSingleMove == false) ||
             (Configs.Toggles.SCROLL_STACKS.getBooleanValue() == false && keyActiveMoveStacks) ||
-            (Configs.Toggles.SCROLL_MATCHING.getBooleanValue() == false && keyActiveMoveMatching) ||
-            (Configs.Toggles.SCROLL_EVERYTHING.getBooleanValue() == false && keyActiveMoveEverything))
+            (Configs.Toggles.SCROLL_MATCHING.getBooleanValue() == false && keyActiveMoveMatching))
         {
             return false;
         }
-
-        /*
-        // Move everything
-        if (keyActiveMoveEverything)
-        {
-            tryMoveStacks(slot, gui, false, moveToOtherInventory, false);
-        }
-        */
         
         // Move all matching items
         else if (keyActiveMoveMatching)
@@ -1619,106 +1599,6 @@ public class InventoryUtils
         }
     }
 
-    public static void throwAllCraftingResultsToGround(RecipePattern recipe,
-                                                       HandledScreen<? extends ScreenHandler> gui)
-    {
-        Slot slot = CraftingHandler.getFirstCraftingOutputSlotForGui(gui);
-
-        if (slot != null && isStackEmpty(recipe.getResult()) == false)
-        {
-            dropStacks(gui, recipe.getResult(), slot, false);
-        }
-    }
-
-    public static void throwAllNonRecipeItemsToGround(RecipePattern recipe,
-                                                      HandledScreen<? extends ScreenHandler> gui)
-    {
-        Slot outputSlot = CraftingHandler.getFirstCraftingOutputSlotForGui(gui);
-
-        if (outputSlot != null && isStackEmpty(recipe.getResult()) == false)
-        {
-            SlotRange range = CraftingHandler.getCraftingGridSlots(gui, outputSlot);
-            ItemStack[] recipeItems = recipe.getRecipeItems();
-            final int invSlots = gui.getScreenHandler().slots.size();
-            final int rangeSlots = Math.min(range.getSlotCount(), recipeItems.length);
-
-            for (int i = 0, slotNum = range.getFirst(); i < rangeSlots && slotNum < invSlots; i++, slotNum++)
-            {
-                Slot slotTmp = gui.getScreenHandler().getSlot(slotNum);
-                ItemStack stack = slotTmp.getStack();
-
-                if (stack.isEmpty() == false && areStacksEqual(stack, recipeItems[i]) == false)
-                {
-                    dropAllMatchingStacks(gui, stack);
-                }
-            }
-        }
-    }
-
-    public static void setCraftingGridContentsUsingSwaps(HandledScreen<? extends ScreenHandler> gui,
-                                                         PlayerInventory inv,
-                                                         RecipePattern recipe,
-                                                         Slot outputSlot)
-    {
-        SlotRange range = CraftingHandler.getCraftingGridSlots(gui, outputSlot);
-
-        if (range != null && isStackEmpty(recipe.getResult()) == false)
-        {
-            ItemStack[] recipeItems = recipe.getRecipeItems();
-            final int invSlots = gui.getScreenHandler().slots.size();
-            final int rangeSlots = Math.min(range.getSlotCount(), recipeItems.length);
-            IntArrayList toRemove = new IntArrayList();
-            boolean movedSomething = false;
-
-            setInhibitCraftingOutputUpdate(true);
-
-            for (int i = 0, slotNum = range.getFirst(); i < rangeSlots && slotNum < invSlots; i++, slotNum++)
-            {
-                Slot slotTmp = gui.getScreenHandler().getSlot(slotNum);
-                ItemStack recipeStack = recipeItems[i];
-                ItemStack slotStack = slotTmp.getStack();
-                boolean recipeHasItem = isStackEmpty(recipeStack) == false;
-
-                if (areStacksEqual(recipeStack, slotStack) == false)
-                {
-                    if (recipeHasItem == false)
-                    {
-                        toRemove.add(slotNum);
-                    }
-                    else
-                    {
-                        int index = getPlayerInventoryIndexWithItem(recipeStack, inv);
-
-                        if (index >= 0)
-                        {
-                            clickSlot(gui, slotNum, index, SlotActionType.SWAP);
-                            movedSomething = true;
-                        }
-                    }
-                }
-            }
-
-            movedSomething |= (toRemove.isEmpty() == false);
-
-            for (int slotNum : toRemove)
-            {
-                shiftClickSlot(gui, slotNum);
-
-                if (isStackEmpty(gui.getScreenHandler().getSlot(slotNum).getStack()) == false)
-                {
-                    dropStack(gui, slotNum);
-                }
-            }
-
-            setInhibitCraftingOutputUpdate(false);
-
-            if (movedSomething)
-            {
-                updateCraftingOutputSlot(outputSlot);
-            }
-        }
-    }
-
     private static int putSingleItemIntoSlots(HandledScreen<? extends ScreenHandler> gui,
                                               IntArrayList targetSlots,
                                               int startIndex)
@@ -2538,48 +2418,6 @@ public class InventoryUtils
         slotNumbers.sort(new SlotVerticalSorterSlotNumbers(container, above));
 
         return slotNumbers;
-    }
-
-    public static void tryClearCursor(HandledScreen<? extends ScreenHandler> gui)
-    {
-        ItemStack stackCursor = gui.getScreenHandler().getCursorStack();
-
-        if (isStackEmpty(stackCursor) == false)
-        {
-            IntArrayList emptySlots = getSlotNumbersOfEmptySlotsInPlayerInventory(gui.getScreenHandler(), false);
-
-            if (emptySlots.isEmpty() == false)
-            {
-                leftClickSlot(gui, emptySlots.getInt(0));
-            }
-            else
-            {
-                IntArrayList matchingSlots = getSlotNumbersOfMatchingStacks(gui.getScreenHandler(), stackCursor, true);
-
-                if (matchingSlots.isEmpty() == false)
-                {
-                    for (int slotNum : matchingSlots)
-                    {
-                        Slot slot = gui.getScreenHandler().getSlot(slotNum);
-                        ItemStack stackSlot = slot.getStack();
-
-                        if (slot == null || areStacksEqual(stackSlot, stackCursor) == false ||
-                            getStackSize(stackSlot) >= stackCursor.getMaxCount())
-                        {
-                            break;
-                        }
-
-                        leftClickSlot(gui, slotNum);
-                        stackCursor = gui.getScreenHandler().getCursorStack();
-                    }
-                }
-            }
-
-            if (isStackEmpty(gui.getScreenHandler().getCursorStack()) == false)
-            {
-                dropItemsFromCursor(gui);
-            }
-        }
     }
 
     public static void resetLastSlotNumber()
