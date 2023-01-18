@@ -1539,33 +1539,6 @@ public class InventoryUtils
         }
     }
 
-    public static void craftEverythingPossibleWithCurrentRecipe(RecipePattern recipe,
-                                                                HandledScreen<? extends ScreenHandler> gui)
-    {
-        Slot slot = CraftingHandler.getFirstCraftingOutputSlotForGui(gui);
-
-        if (slot != null && isStackEmpty(recipe.getResult()) == false)
-        {
-            SlotRange range = CraftingHandler.getCraftingGridSlots(gui, slot);
-
-            if (range != null)
-            {
-                // Clear all items from the grid first, to avoid unbalanced stacks
-                if (clearCraftingGridOfItems(recipe, gui, range, false) == false)
-                {
-                    return;
-                }
-
-                tryMoveItemsToCraftingGridSlots(recipe, slot, gui, true);
-
-                if (slot.hasStack())
-                {
-                    craftAsManyItemsAsPossible(recipe, slot, gui);
-                }
-            }
-        }
-    }
-
     public static void moveAllCraftingResultsToOtherInventory(RecipePattern recipe,
                                                               HandledScreen<? extends ScreenHandler> gui)
     {

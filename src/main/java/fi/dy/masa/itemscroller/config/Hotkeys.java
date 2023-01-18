@@ -14,7 +14,6 @@ public class Hotkeys
 
     public static final ConfigHotkey OPEN_CONFIG_GUI            = new ConfigHotkey("openConfigGui",         "I,C", "Open the in-game config GUI");
 
-    public static final ConfigHotkey CRAFT_EVERYTHING           = new ConfigHotkey("craftEverything",       "LEFT_CONTROL,C", GUI_NO_ORDER, "Craft everything possible once with the currently selected recipe");
     public static final ConfigHotkey DROP_ALL_MATCHING          = new ConfigHotkey("dropAllMatching",       "LEFT_CONTROL,LEFT_SHIFT,Q", GUI_NO_ORDER, "Drop all stacks identical to the hovered stack");
     public static final ConfigHotkey MOVE_CRAFT_RESULTS         = new ConfigHotkey("moveCraftResults",      "LEFT_CONTROL,M", GUI_NO_ORDER, "Move all of the currently selected recipe's\noutput items from the player inventory\nto the other inventory");
     public static final ConfigHotkey RECIPE_VIEW                = new ConfigHotkey("recipeView",            "A", GUI_RELAXED, "Show the Item Scroller recipe GUI");
@@ -49,7 +48,6 @@ public class Hotkeys
             OPEN_CONFIG_GUI,
             TOGGLE_MOD_ON_OFF,
 
-            CRAFT_EVERYTHING,
             DROP_ALL_MATCHING,
             MOVE_CRAFT_RESULTS,
             RECIPE_VIEW,

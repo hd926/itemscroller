@@ -123,12 +123,7 @@ public class KeybindCallbacks implements IHotkeyCallback
             }
         }
 
-        if (key == Hotkeys.CRAFT_EVERYTHING.getKeybind())
-        {
-            InventoryUtils.craftEverythingPossibleWithCurrentRecipe(recipes.getSelectedRecipe(), gui);
-            return true;
-        }
-        else if (key == Hotkeys.MOVE_CRAFT_RESULTS.getKeybind())
+        if (key == Hotkeys.MOVE_CRAFT_RESULTS.getKeybind())
         {
             InventoryUtils.moveAllCraftingResultsToOtherInventory(recipes.getSelectedRecipe(), gui);
             return true;
