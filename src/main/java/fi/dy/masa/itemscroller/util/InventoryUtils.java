@@ -28,7 +28,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.CraftingRecipe;
 import net.minecraft.recipe.RecipeType;
-import net.minecraft.registry.Registries;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.screen.MerchantScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.CraftingResultSlot;
@@ -40,6 +40,7 @@ import net.minecraft.village.TradeOffer;
 import net.minecraft.village.TradeOfferList;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
+import net.minecraft.item.ItemGroup;
 
 import fi.dy.masa.itemscroller.ItemScroller;
 import fi.dy.masa.itemscroller.config.Configs;
@@ -132,7 +133,7 @@ public class InventoryUtils
     {
         if (isStackEmpty(stack) == false)
         {
-            Identifier rl = Registries.ITEM.getId(stack.getItem());
+            Identifier rl = Registry.ITEM.getId(stack.getItem());
             String idStr = rl != null ? rl.toString() : "null";
             String displayName = stack.getName().getString();
             String nbtStr = stack.getNbt() != null ? stack.getNbt().toString() : "<no NBT>";
@@ -371,7 +372,7 @@ public class InventoryUtils
         {
             if (gui instanceof CreativeInventoryScreen)
             {
-                boolean isPlayerInv = ((CreativeInventoryScreen) gui).isInventoryTabSelected(); // TODO 1.19.3+
+                boolean isPlayerInv = ((CreativeInventoryScreen) gui).getSelectedTab() == ItemGroup.INVENTORY.getIndex(); // TODO 1.19.3+
                 int slotNumber = isPlayerInv ? AccessorUtils.getSlotIndex(slot) : slot.id;
                 slotNumberLast = slotNumber;
             }
@@ -471,7 +472,7 @@ public class InventoryUtils
     {
         CreativeInventoryScreen guiCreative = (CreativeInventoryScreen) gui;
         Slot slot = AccessorUtils.getSlotAtPosition(gui, x, y);
-        boolean isPlayerInv = guiCreative.isInventoryTabSelected(); // TODO 1.19.3+
+        boolean isPlayerInv = guiCreative.getSelectedTab() == ItemGroup.INVENTORY.getIndex(); // TODO 1.19.3+
 
         // Only allow dragging from the hotbar slots
         if (slot == null || (slot.getClass() != Slot.class && isPlayerInv == false))
@@ -819,7 +820,7 @@ public class InventoryUtils
 
         // Try to move the temporary single-item stack via the shift-click handler method
         slot.setStack(stack);
-        container.quickMove(mc.player, slot.id);
+        container.transferSlot(mc.player, slot.id);
 
         // Successfully moved the item somewhere, now we want to check where it went
         if (slot.hasStack() == false)
