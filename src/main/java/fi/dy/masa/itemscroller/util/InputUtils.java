@@ -13,10 +13,7 @@ public class InputUtils
 {
     public static boolean isRecipeViewOpen()
     {
-        return GuiUtils.getCurrentScreen() != null &&
-               Hotkeys.RECIPE_VIEW.getKeybind().isKeybindHeld() &&
-               KeybindCallbacks.getInstance().functionalityEnabled() &&
-               CraftingHandler.isCraftingGui(GuiUtils.getCurrentScreen());
+        return false;
     }
 
     public static boolean canShiftDropItems(HandledScreen<?> gui, MinecraftClient mc, int mouseX, int mouseY)

@@ -128,14 +128,6 @@ public class KeybindCallbacks implements IHotkeyCallback
             InventoryUtils.moveAllCraftingResultsToOtherInventory(recipes.getSelectedRecipe(), gui);
             return true;
         }
-        else if (key == Hotkeys.STORE_RECIPE.getKeybind())
-        {
-            if (InputUtils.isRecipeViewOpen() && InventoryUtils.isCraftingSlot(gui, slot))
-            {
-                recipes.storeCraftingRecipeToCurrentSelection(slot, gui, true);
-                return true;
-            }
-        }
         else if (key == Hotkeys.VILLAGER_TRADE_FAVORITES.getKeybind())
         {
             return InventoryUtils.villagerTradeEverythingPossibleWithAllFavoritedTrades();
