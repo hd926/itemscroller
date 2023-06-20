@@ -26,8 +26,6 @@ public class InitHandler implements IInitializationHandler
         WorldLoadHandler.getInstance().registerWorldLoadPreHandler(listener);
         WorldLoadHandler.getInstance().registerWorldLoadPostHandler(listener);
 
-        TickHandler.getInstance().registerClientTickHandler(KeybindCallbacks.getInstance());
-
         KeybindCallbacks.getInstance().setCallbacks();
     }
 }

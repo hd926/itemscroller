@@ -26,7 +26,7 @@ import fi.dy.masa.itemscroller.util.InputUtils;
 import fi.dy.masa.itemscroller.util.InventoryUtils;
 import fi.dy.masa.itemscroller.util.MoveAction;
 
-public class KeybindCallbacks implements IHotkeyCallback, IClientTickHandler
+public class KeybindCallbacks implements IHotkeyCallback
 {
     private static final KeybindCallbacks INSTANCE = new KeybindCallbacks();
 
@@ -111,11 +111,6 @@ public class KeybindCallbacks implements IHotkeyCallback, IClientTickHandler
                 final int mouseY = fi.dy.masa.malilib.util.InputUtils.getMouseY();
                 return InventoryUtils.dragMoveItems(gui, moveAction, mouseX, mouseY, true);
             }
-            else if (key == Hotkeys.KEY_MOVE_EVERYTHING.getKeybind())
-            {
-                InventoryUtils.tryMoveStacks(slot, gui, false, true, false);
-                return true;
-            }
             else if (key == Hotkeys.DROP_ALL_MATCHING.getKeybind())
             {
                 if (Configs.Toggles.DROP_MATCHING.getBooleanValue() &&
@@ -128,28 +123,10 @@ public class KeybindCallbacks implements IHotkeyCallback, IClientTickHandler
             }
         }
 
-        if (key == Hotkeys.CRAFT_EVERYTHING.getKeybind())
-        {
-            InventoryUtils.craftEverythingPossibleWithCurrentRecipe(recipes.getSelectedRecipe(), gui);
-            return true;
-        }
-        else if (key == Hotkeys.THROW_CRAFT_RESULTS.getKeybind())
-        {
-            InventoryUtils.throwAllCraftingResultsToGround(recipes.getSelectedRecipe(), gui);
-            return true;
-        }
-        else if (key == Hotkeys.MOVE_CRAFT_RESULTS.getKeybind())
+        if (key == Hotkeys.MOVE_CRAFT_RESULTS.getKeybind())
         {
             InventoryUtils.moveAllCraftingResultsToOtherInventory(recipes.getSelectedRecipe(), gui);
             return true;
-        }
-        else if (key == Hotkeys.STORE_RECIPE.getKeybind())
-        {
-            if (InputUtils.isRecipeViewOpen() && InventoryUtils.isCraftingSlot(gui, slot))
-            {
-                recipes.storeCraftingRecipeToCurrentSelection(slot, gui, true);
-                return true;
-            }
         }
         else if (key == Hotkeys.VILLAGER_TRADE_FAVORITES.getKeybind())
         {
@@ -170,99 +147,5 @@ public class KeybindCallbacks implements IHotkeyCallback, IClientTickHandler
         }
 
         return false;
-    }
-
-    @Override
-    public void onClientTick(MinecraftClient mc)
-    {
-        if (this.functionalityEnabled() == false || mc.player == null)
-        {
-            return;
-        }
-
-        ClickPacketBuffer.sendBufferedPackets(Configs.Generic.PACKET_RATE_LIMIT.getIntegerValue());
-
-        if (ClickPacketBuffer.shouldCancelWindowClicks())
-        {
-            return;
-        }
-
-        if (GuiUtils.getCurrentScreen() instanceof HandledScreen<?> gui &&
-            (GuiUtils.getCurrentScreen() instanceof CreativeInventoryScreen) == false &&
-            Configs.GUI_BLACKLIST.contains(GuiUtils.getCurrentScreen().getClass().getName()) == false &&
-            Hotkeys.MASS_CRAFT.getKeybind().isKeybindHeld())
-        {
-            if (++this.massCraftTicker < Configs.Generic.MASS_CRAFT_INTERVAL.getIntegerValue())
-            {
-                return;
-            }
-
-            Slot outputSlot = CraftingHandler.getFirstCraftingOutputSlotForGui(gui);
-
-            if (outputSlot != null)
-            {
-                if (Configs.Generic.RATE_LIMIT_CLICK_PACKETS.getBooleanValue())
-                {
-                    ClickPacketBuffer.setShouldBufferClickPackets(true);
-                }
-
-                RecipePattern recipe = RecipeStorage.getInstance().getSelectedRecipe();
-                int limit = Configs.Generic.MASS_CRAFT_ITERATIONS.getIntegerValue();
-
-                if (Configs.Generic.MASS_CRAFT_SWAPS.getBooleanValue())
-                {
-                    for (int i = 0; i < limit; ++i)
-                    {
-                        InventoryUtils.tryClearCursor(gui);
-                        InventoryUtils.setInhibitCraftingOutputUpdate(true);
-                        InventoryUtils.throwAllCraftingResultsToGround(recipe, gui);
-                        InventoryUtils.throwAllNonRecipeItemsToGround(recipe, gui);
-                        InventoryUtils.setCraftingGridContentsUsingSwaps(gui, mc.player.getInventory(), recipe, outputSlot);
-                        InventoryUtils.setInhibitCraftingOutputUpdate(false);
-                        InventoryUtils.updateCraftingOutputSlot(outputSlot);
-
-                        if (InventoryUtils.areStacksEqual(outputSlot.getStack(), recipe.getResult()) == false)
-                        {
-                            break;
-                        }
-
-                        InventoryUtils.shiftClickSlot(gui, outputSlot.id);
-                    }
-                }
-                else
-                {
-                    int failsafe = 0;
-
-                    while (++failsafe < limit)
-                    {
-                        InventoryUtils.tryClearCursor(gui);
-                        InventoryUtils.setInhibitCraftingOutputUpdate(true);
-                        InventoryUtils.throwAllCraftingResultsToGround(recipe, gui);
-                        InventoryUtils.throwAllNonRecipeItemsToGround(recipe, gui);
-                        InventoryUtils.tryMoveItemsToFirstCraftingGrid(recipe, gui, true);
-                        InventoryUtils.setInhibitCraftingOutputUpdate(false);
-                        InventoryUtils.updateCraftingOutputSlot(outputSlot);
-
-                        if (InventoryUtils.areStacksEqual(outputSlot.getStack(), recipe.getResult()) == false)
-                        {
-                            break;
-                        }
-
-                        if (Configs.Generic.CARPET_CTRL_Q_CRAFTING.getBooleanValue())
-                        {
-                            InventoryUtils.dropStack(gui, outputSlot.id);
-                        }
-                        else
-                        {
-                            InventoryUtils.dropStacksWhileHasItem(gui, outputSlot.id, recipe.getResult());
-                        }
-                    }
-                }
-
-                ClickPacketBuffer.setShouldBufferClickPackets(false);
-            }
-
-            this.massCraftTicker = 0;
-        }
     }
 }
