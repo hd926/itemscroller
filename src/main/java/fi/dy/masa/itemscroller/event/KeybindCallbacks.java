@@ -3,13 +3,18 @@ package fi.dy.masa.itemscroller.event;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.inventory.RecipeInputInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.screen.slot.Slot;
+
 import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message;
 import fi.dy.masa.malilib.hotkeys.IHotkeyCallback;
 import fi.dy.masa.malilib.hotkeys.IKeybind;
 import fi.dy.masa.malilib.hotkeys.KeyAction;
+import fi.dy.masa.malilib.hotkeys.KeyCallbackToggleBooleanConfigWithMessage;
 import fi.dy.masa.malilib.interfaces.IClientTickHandler;
 import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.InfoUtils;
@@ -17,6 +22,7 @@ import fi.dy.masa.itemscroller.ItemScroller;
 import fi.dy.masa.itemscroller.config.Configs;
 import fi.dy.masa.itemscroller.config.Hotkeys;
 import fi.dy.masa.itemscroller.gui.GuiConfigs;
+import fi.dy.masa.itemscroller.mixin.IMixinCraftingResultSlot;
 import fi.dy.masa.itemscroller.recipes.CraftingHandler;
 import fi.dy.masa.itemscroller.recipes.RecipePattern;
 import fi.dy.masa.itemscroller.recipes.RecipeStorage;
@@ -27,6 +33,8 @@ public class KeybindCallbacks implements IHotkeyCallback
     private static final KeybindCallbacks INSTANCE = new KeybindCallbacks();
 
     protected int massCraftTicker;
+
+    private boolean recipeBookClicks = false;
 
     public static KeybindCallbacks getInstance()
     {
@@ -136,12 +144,25 @@ public class KeybindCallbacks implements IHotkeyCallback
             }
             else
             {
-                ItemScroller.logger.info("GUI class: {}", gui.getClass().getName());
+                ItemScroller.LOGGER.info("GUI class: {}", gui.getClass().getName());
             }
 
             return true;
         }
+        else if (key == Hotkeys.SORT_INVENTORY.getKeybind())
+        {
+            if (Configs.Generic.SORT_INVENTORY_TOGGLE.getBooleanValue())
+            {
+                InventoryUtils.sortInventory(gui);
+                return true;
+            }
+        }
 
         return false;
+    }
+
+    public void onPacket(ScreenHandlerSlotUpdateS2CPacket packet)
+    {
+        var mc = MinecraftClient.getInstance();
     }
 }

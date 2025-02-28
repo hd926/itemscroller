@@ -177,7 +177,7 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
                         recipes.scrollSelection(dWheel < 0);
                         cancel = true;
                     }
-                    else
+                    else if (!InventoryUtils.ignoreScrollingInsideOfBundles)
                     {
                         cancel = InventoryUtils.tryMoveItems(gui, recipes, dWheel > 0);
                     }
@@ -200,7 +200,8 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
                         // Pick-blocking over a crafting output slot with the recipe view open, store the recipe
                         else if (isPickBlock && InputUtils.isRecipeViewOpen() && InventoryUtils.isCraftingSlot(gui, slot))
                         {
-                            recipes.storeCraftingRecipeToCurrentSelection(slot, gui, true);
+                            //System.out.print("handleInputImpl()\n");
+                            recipes.storeCraftingRecipeToCurrentSelection(slot, gui, true, false, mc);
                             cancel = true;
                         }
                     }
