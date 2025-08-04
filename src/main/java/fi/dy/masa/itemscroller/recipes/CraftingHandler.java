@@ -5,15 +5,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
+
 import fi.dy.masa.itemscroller.ItemScroller;
 
 public class CraftingHandler
 {
-    private static final Map<CraftingOutputSlot, SlotRange> CRAFTING_GRID_SLOTS = new HashMap<CraftingOutputSlot, SlotRange>();
+    private static final Map<CraftingOutputSlot, SlotRange> CRAFTING_GRID_SLOTS = new HashMap<>();
     private static final Set<Class<? extends HandledScreen<?>>> CRAFTING_GUIS = new HashSet<>();
 
     public static void clearDefinitions()
@@ -51,8 +53,9 @@ public class CraftingHandler
 
     /**
      * Gets the crafting grid SlotRange associated with the given slot in the given gui, if any.
-     * @param gui
-     * @param slot
+     *
+     * @param gui  ()
+     * @param slot ()
      * @return the SlotRange of the crafting grid, or null, if the given slot is not a crafting output slot
      */
     @Nullable
@@ -84,7 +87,7 @@ public class CraftingHandler
         private final Class<? extends Slot> slotClass;
         private final int outputSlot;
 
-        private CraftingOutputSlot (Class<? extends HandledScreen<?>> guiClass, Class<? extends Slot> slotClass, int outputSlot)
+        private CraftingOutputSlot(Class<? extends HandledScreen<?>> guiClass, Class<? extends Slot> slotClass, int outputSlot)
         {
             this.guiClass = guiClass;
             this.slotClass = slotClass;
@@ -132,29 +135,38 @@ public class CraftingHandler
         public boolean equals(Object obj)
         {
             if (this == obj)
+            {
                 return true;
+            }
             if (obj == null)
+            {
                 return false;
+            }
             if (getClass() != obj.getClass())
+            {
                 return false;
+            }
             CraftingOutputSlot other = (CraftingOutputSlot) obj;
             if (guiClass == null)
             {
                 if (other.guiClass != null)
+                {
                     return false;
+                }
             }
             else if (guiClass != other.guiClass)
+            {
                 return false;
+            }
             if (outputSlot != other.outputSlot)
+            {
                 return false;
+            }
             if (slotClass == null)
             {
-                if (other.slotClass != null)
-                    return false;
+                return other.slotClass == null;
             }
-            else if (slotClass != other.slotClass)
-                return false;
-            return true;
+            else return slotClass == other.slotClass;
         }
 
     }

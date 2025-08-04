@@ -181,5 +181,6 @@
     "itemscroller.gui.label.sorting_category.other": "Other Items",
     "itemscroller.gui.title.configs": "Item Scroller Configuraciones - %s",
     "itemscroller.message.toggled_mod_off": "Activar todas las funionalidades de Item Scroller §cOFF",
-    "itemscroller.message.toggled_mod_on": "Activar todas las funionalidades de Item Scroller  §aON"
+    "itemscroller.message.toggled_mod_on": "Activar todas las funionalidades de Item Scroller  §aON",
+    "modmenu.descriptionTranslation.itemscroller": "Move items in inventory GUIs by scrolling the mouse wheel or dragging over slots"
 }

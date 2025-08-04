@@ -2,6 +2,8 @@ package fi.dy.masa.itemscroller.recipes;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import javax.annotation.Nonnull;
 
 import net.minecraft.client.MinecraftClient;
@@ -16,11 +18,11 @@ import net.minecraft.screen.slot.Slot;
 
 import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.StringUtils;
+import fi.dy.masa.malilib.util.game.RecipeBookUtils;
 import fi.dy.masa.malilib.util.nbt.NbtUtils;
 import fi.dy.masa.itemscroller.ItemScroller;
 import fi.dy.masa.itemscroller.Reference;
 import fi.dy.masa.itemscroller.config.Configs;
-import fi.dy.masa.itemscroller.util.Constants;
 
 public class RecipeStorage
 {
@@ -147,16 +149,33 @@ public class RecipeStorage
     {
         MinecraftClient mc = MinecraftClient.getInstance();
 
+        // DEBUG
+//        RecipeBookUtils.toggleDebugLog(true);
+//        RecipeBookUtils.toggleAnsiColorLog(true);
+
         for (RecipePattern recipe : this.recipes)
         {
             if (!recipe.isEmpty())
             {
-                if (recipe.matchClientRecipeBookEntry(entry, mc))
+                List<RecipeBookUtils.Type> types;
+
+                if (recipe.getRecipeType() != null)
+                {
+                    types = List.of(recipe.getRecipeType());
+                }
+                else
+                {
+                    types = List.of(RecipeBookUtils.Type.SHAPED, RecipeBookUtils.Type.SHAPELESS);
+                }
+
+                if (RecipeBookUtils.matchClientRecipeBookEntry(recipe.getResult(), Arrays.asList(recipe.getRecipeItems()), entry, types, mc))
+//                if (recipe.matchClientRecipeBookEntry(entry, mc))
                 {
                     ItemScroller.debugLog("onAddToRecipeBook(): Positive Match for result stack: [{}] networkId [{}]", recipe.getResult().toString(), entry.id().index());
                     recipe.storeNetworkRecipeId(entry.id());
                     recipe.storeRecipeCategory(entry.category());
                     recipe.storeRecipeDisplayEntry(entry);
+                    recipe.storeRecipeType(RecipeBookUtils.Type.fromRecipeDisplay(entry.display()));
                     break;
                 }
             }
@@ -165,7 +184,7 @@ public class RecipeStorage
 
     private void readFromNBT(NbtCompound nbt, @Nonnull DynamicRegistryManager registryManager)
     {
-        if (nbt == null || nbt.contains("Recipes", Constants.NBT.TAG_LIST) == false)
+        if (nbt == null || nbt.contains("Recipes") == false)
         {
             return;
         }
@@ -175,31 +194,47 @@ public class RecipeStorage
             this.recipes[i].clearRecipe();
         }
 
-        NbtList tagList = nbt.getList("Recipes", Constants.NBT.TAG_COMPOUND);
+        NbtList tagList = nbt.getListOrEmpty("Recipes");
         int count = tagList.size();
 
         for (int i = 0; i < count; i++)
         {
-            NbtCompound tag = tagList.getCompound(i);
+            NbtCompound tag = tagList.getCompoundOrEmpty(i);
 
-            int index = tag.getByte("RecipeIndex");
+            int index = tag.getByte("RecipeIndex", (byte) -1);
 
             if (index >= 0 && index < this.recipes.length)
             {
                 this.recipes[index].readFromNBT(tag, registryManager);
 
-                if (tag.contains("RecipeCategory", Constants.NBT.TAG_STRING))
+                if (tag.contains("RecipeCategory"))
                 {
-                    this.recipes[index].storeRecipeCategory(RecipeUtils.getRecipeCategoryFromId(tag.getString("RecipeCategory")));
+                    this.recipes[index].storeRecipeCategory(RecipeBookUtils.getRecipeCategoryFromId(tag.getString("RecipeCategory", "")));
                 }
                 if (tag.contains("LastNetworkId"))
                 {
-                    this.recipes[index].storeNetworkRecipeId(new NetworkRecipeId(tag.getInt("LastNetworkId")));
+                    this.recipes[index].storeNetworkRecipeId(new NetworkRecipeId(tag.getInt("LastNetworkId", -1)));
+                }
+                if (tag.contains("RecipeType"))
+                {
+                    String recipeType = tag.getString("RecipeType", "");
+
+                    if (!recipeType.isEmpty())
+                    {
+                        for (RecipeBookUtils.Type type : RecipeBookUtils.Type.values())
+                        {
+                            if (type.name().equalsIgnoreCase(recipeType))
+                            {
+                                this.recipes[index].storeRecipeType(type);
+                            }
+                        }
+                    }
+
                 }
             }
         }
 
-        this.changeSelectedRecipe(nbt.getByte("Selected"));
+        this.changeSelectedRecipe(nbt.getByte("Selected", (byte) -1));
     }
 
     private NbtCompound writeToNBT(@Nonnull DynamicRegistryManager registry)
@@ -217,7 +252,7 @@ public class RecipeStorage
 
                 if (entry.getRecipeCategory() != null)
                 {
-                    String id = RecipeUtils.getRecipeCategoryId(entry.getRecipeCategory());
+                    String id = RecipeBookUtils.getRecipeCategoryId(entry.getRecipeCategory());
 
                     if (!id.isEmpty())
                     {
@@ -227,6 +262,10 @@ public class RecipeStorage
                 if (entry.getNetworkRecipeId() != null)
                 {
                     tag.putInt("LastNetworkId", entry.getNetworkRecipeId().index());
+                }
+                if (entry.getRecipeType() != null)
+                {
+                    tag.putString("RecipeType", entry.getRecipeType().name().toLowerCase());
                 }
 
                 tagRecipes.add(tag);
