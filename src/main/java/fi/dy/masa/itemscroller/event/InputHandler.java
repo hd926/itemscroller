@@ -1,21 +1,20 @@
 package fi.dy.masa.itemscroller.event;
 
 import org.lwjgl.glfw.GLFW;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.entity.passive.MerchantEntity;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.MathHelper;
-
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.hotkeys.*;
 import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.KeyCodes;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import fi.dy.masa.itemscroller.Reference;
 import fi.dy.masa.itemscroller.config.Configs;
 import fi.dy.masa.itemscroller.config.Hotkeys;
@@ -48,7 +47,7 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
     }
 
     @Override
-    public boolean onKeyInput(int keyCode, int scanCode, int modifiers, boolean eventKeyState)
+    public boolean onKeyInput(KeyEvent input, boolean eventKeyState)
     {
         if (InputUtils.isRecipeViewOpen() && eventKeyState)
         {
@@ -56,25 +55,26 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
             RecipeStorage recipes = RecipeStorage.getInstance();
             int oldIndex = recipes.getSelection();
             int recipesPerPage = recipes.getRecipeCountPerPage();
-            int recipeIndexChange = GuiBase.isShiftDown() ? recipesPerPage : recipesPerPage / 2;
+//            int recipeIndexChange = GuiBase.isShiftDown() ? recipesPerPage : recipesPerPage / 2;
+	        int recipeIndexChange = (input.hasShiftDown() || GuiBase.isShiftDown()) ? recipesPerPage : recipesPerPage / 2;
 
-            if (keyCode >= KeyCodes.KEY_1 && keyCode <= KeyCodes.KEY_9)
+            if (input.key() >= KeyCodes.KEY_1 && input.key() <= KeyCodes.KEY_9)
             {
-                index = MathHelper.clamp(keyCode - GLFW.GLFW_KEY_1, 0, 8);
+                index = Mth.clamp(input.key() - GLFW.GLFW_KEY_1, 0, 8);
             }
-            else if (keyCode == KeyCodes.KEY_UP && oldIndex > 0)
+            else if (input.key() == KeyCodes.KEY_UP && oldIndex > 0)
             {
                 index = oldIndex - 1;
             }
-            else if (keyCode == KeyCodes.KEY_DOWN && oldIndex < (recipes.getTotalRecipeCount() - 1))
+            else if (input.key() == KeyCodes.KEY_DOWN && oldIndex < (recipes.getTotalRecipeCount() - 1))
             {
                 index = oldIndex + 1;
             }
-            else if (keyCode == KeyCodes.KEY_LEFT && oldIndex >= recipeIndexChange)
+            else if (input.key() == KeyCodes.KEY_LEFT && oldIndex >= recipeIndexChange)
             {
                 index = oldIndex - recipeIndexChange;
             }
-            else if (keyCode == KeyCodes.KEY_RIGHT && oldIndex < (recipes.getTotalRecipeCount() - recipeIndexChange))
+            else if (input.key() == KeyCodes.KEY_RIGHT && oldIndex < (recipes.getTotalRecipeCount() - recipeIndexChange))
             {
                 index = oldIndex + recipeIndexChange;
             }
@@ -86,24 +86,27 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
             }
         }
 
-        return this.handleInput(keyCode, eventKeyState, 0);
+        return this.handleInput(input.key(), eventKeyState, 0);
     }
 
     @Override
-    public boolean onMouseScroll(int mouseX, int mouseY, double amount)
+    public boolean onMouseScroll(double mouseX, double mouseY, double amount)
     {
-        return this.handleInput(KeyCodes.KEY_NONE, false, amount);
+//        return this.handleInput(null, null, KeyCodes.KEY_NONE, false, amount);
+	    return this.handleInput(KeyCodes.KEY_NONE, false, amount);
     }
 
     @Override
-    public boolean onMouseClick(int mouseX, int mouseY, int eventButton, boolean eventButtonState)
+    public boolean onMouseClick(MouseButtonEvent click, boolean eventButtonState)
     {
-        return this.handleInput(eventButton - 100, eventButtonState, 0);
+//        return this.handleInput(click,null, click.getKeycode() - 100, eventButtonState, 0);
+//	    return this.handleInput(new Click(click.x(), click.y(), new MouseInput(click.getKeycode() - 100, click.modifiers())), null, eventButtonState, 0);
+	    return this.handleInput(click.input() - 100, eventButtonState, 0);
     }
 
     private boolean handleInput(int keyCode, boolean keyState, double dWheel)
     {
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
 
         if (mc.player == null)
         {
@@ -123,7 +126,7 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
         return cancel;
     }
 
-    private boolean handleInputImpl(int keyCode, boolean keyState, double dWheel, MinecraftClient mc)
+    private boolean handleInputImpl(int keyCode, boolean keyState, double dWheel, Minecraft mc)
     {
         MoveAction action = InventoryUtils.getActiveMoveAction();
 
@@ -136,32 +139,30 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
 
         if (this.callbacks.functionalityEnabled() && mc.player != null)
         {
-            final boolean isAttack = InputUtils.isAttack(keyCode);
-            final boolean isUse = InputUtils.isUse(keyCode);
-            final boolean isPickBlock = InputUtils.isPickBlock(keyCode);
+            final boolean isAttack = InputUtils.isAttack(keyCode, mc);
+            final boolean isUse = InputUtils.isUse(keyCode, mc);
+            final boolean isPickBlock = InputUtils.isPickBlock(keyCode, mc);
             final boolean isAttackUseOrPick = isAttack || isUse || isPickBlock;
             final int mouseX = fi.dy.masa.malilib.util.InputUtils.getMouseX();
             final int mouseY = fi.dy.masa.malilib.util.InputUtils.getMouseY();
-            Screen screen = GuiUtils.getCurrentScreen();
 
             if (Configs.Toggles.VILLAGER_TRADE_FEATURES.getBooleanValue())
             {
                 VillagerDataStorage storage = VillagerDataStorage.getInstance();
 
-                if (screen == null && mc.crosshairTarget != null &&
-                    mc.crosshairTarget.getType() == HitResult.Type.ENTITY &&
-                    ((EntityHitResult) mc.crosshairTarget).getEntity() instanceof MerchantEntity)
+                if (mc.screen == null && mc.hitResult != null &&
+                    mc.hitResult.getType() == HitResult.Type.ENTITY &&
+                    ((EntityHitResult) mc.hitResult).getEntity() instanceof AbstractVillager)
                 {
-                    storage.setLastInteractedUUID(((EntityHitResult) mc.crosshairTarget).getEntity().getUuid());
+                    storage.setLastInteractedUUID(((EntityHitResult) mc.hitResult).getEntity().getUUID());
                 }
             }
 
-            if (screen instanceof HandledScreen &&
-                (screen instanceof CreativeInventoryScreen) == false &&
-                Configs.GUI_BLACKLIST.contains(screen.getClass().getName()) == false)
+            if (mc.screen instanceof AbstractContainerScreen<?> gui &&
+                (mc.screen instanceof CreativeModeInventoryScreen) == false &&
+                Configs.GUI_BLACKLIST.contains(mc.screen.getClass().getName()) == false)
             {
-                HandledScreen<?> gui = (HandledScreen<?>) screen;
-                RecipeStorage recipes = RecipeStorage.getInstance();
+	            RecipeStorage recipes = RecipeStorage.getInstance();
 
                 if (dWheel != 0)
                 {
@@ -215,7 +216,7 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
                     }
                     else if (Configs.Toggles.SHIFT_PLACE_ITEMS.getBooleanValue() &&
                              isAttack && isShiftDown &&
-                             InventoryUtils.canShiftPlaceItems(gui))
+                             InventoryUtils.canShiftPlaceItems(gui) && slot != null)
                     {
                         cancel |= InventoryUtils.shiftPlaceItems(slot, gui);
                     }
@@ -233,20 +234,21 @@ public class InputHandler implements IKeybindProvider, IKeyboardInputHandler, IM
     }
 
     @Override
-    public void onMouseMove(int mouseX, int mouseY)
+    public void onMouseMove(double mouseX, double mouseY)
     {
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null) return;
 
         if (this.callbacks.functionalityEnabled() &&
             mc.player != null &&
-            GuiUtils.getCurrentScreen() instanceof HandledScreen<?> screen &&
+            GuiUtils.getCurrentScreen() instanceof AbstractContainerScreen<?> screen &&
             Configs.GUI_BLACKLIST.contains(screen.getClass().getName()) == false)
         {
-            this.handleDragging(screen, mc, mouseX, mouseY, false);
+            this.handleDragging(screen, mc, (int) mouseX, (int) mouseY, false);
         }
     }
 
-    private boolean handleDragging(HandledScreen<?> gui, MinecraftClient mc, int mouseX, int mouseY, boolean isClick)
+    private boolean handleDragging(AbstractContainerScreen<?> gui, Minecraft mc, int mouseX, int mouseY, boolean isClick)
     {
         MoveAction action = InventoryUtils.getActiveMoveAction();
         boolean cancel = false;

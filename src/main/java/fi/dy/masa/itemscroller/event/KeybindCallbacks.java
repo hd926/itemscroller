@@ -1,13 +1,5 @@
 package fi.dy.masa.itemscroller.event;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.inventory.RecipeInputInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
-import net.minecraft.screen.slot.Slot;
-
 import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.gui.Message;
@@ -18,6 +10,12 @@ import fi.dy.masa.malilib.hotkeys.KeyCallbackToggleBooleanConfigWithMessage;
 import fi.dy.masa.malilib.interfaces.IClientTickHandler;
 import fi.dy.masa.malilib.util.GuiUtils;
 import fi.dy.masa.malilib.util.InfoUtils;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import fi.dy.masa.itemscroller.ItemScroller;
 import fi.dy.masa.itemscroller.config.Configs;
 import fi.dy.masa.itemscroller.config.Hotkeys;
@@ -31,11 +29,8 @@ import fi.dy.masa.itemscroller.util.*;
 public class KeybindCallbacks implements IHotkeyCallback
 {
     private static final KeybindCallbacks INSTANCE = new KeybindCallbacks();
-
     protected int massCraftTicker;
-
     private boolean recipeBookClicks = false;
-
     public static KeybindCallbacks getInstance()
     {
         return INSTANCE;
@@ -75,9 +70,9 @@ public class KeybindCallbacks implements IHotkeyCallback
 
     private boolean onKeyActionImpl(KeyAction action, IKeybind key)
     {
-        MinecraftClient mc = MinecraftClient.getInstance();
+        Minecraft mc = Minecraft.getInstance();
 
-        if (mc.player == null || mc.world == null)
+        if (mc.player == null || mc.level == null)
         {
             return false;
         }
@@ -96,13 +91,13 @@ public class KeybindCallbacks implements IHotkeyCallback
         }
 
         if (this.functionalityEnabled() == false ||
-            (GuiUtils.getCurrentScreen() instanceof HandledScreen) == false ||
+            (GuiUtils.getCurrentScreen() instanceof AbstractContainerScreen) == false ||
             Configs.GUI_BLACKLIST.contains(GuiUtils.getCurrentScreen().getClass().getName()))
         {
             return false;
         }
 
-        HandledScreen<?> gui = (HandledScreen<?>) GuiUtils.getCurrentScreen();
+        AbstractContainerScreen<?> gui = (AbstractContainerScreen<?>) GuiUtils.getCurrentScreen();
         Slot slot = AccessorUtils.getSlotUnderMouse(gui);
         RecipeStorage recipes = RecipeStorage.getInstance();
         MoveAction moveAction = InputUtils.getDragMoveAction(key);
@@ -119,9 +114,9 @@ public class KeybindCallbacks implements IHotkeyCallback
             {
                 if (Configs.Toggles.DROP_MATCHING.getBooleanValue() &&
                     Configs.GUI_BLACKLIST.contains(gui.getClass().getName()) == false &&
-                    slot.hasStack())
+                    slot.hasItem())
                 {
-                    InventoryUtils.dropStacks(gui, slot.getStack(), slot, true);
+                    InventoryUtils.dropStacks(gui, slot.getItem(), slot, true);
                     return true;
                 }
             }
@@ -161,8 +156,8 @@ public class KeybindCallbacks implements IHotkeyCallback
         return false;
     }
 
-    public void onPacket(ScreenHandlerSlotUpdateS2CPacket packet)
-    {
-//        var mc = MinecraftClient.getInstance();
-    }
+//    public void onPacket(ScreenHandlerSlotUpdateS2CPacket packet)
+//    {
+////        var mc = MinecraftClient.getInstance();
+//    }
 }

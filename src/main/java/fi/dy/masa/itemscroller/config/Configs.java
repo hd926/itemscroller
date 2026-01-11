@@ -4,14 +4,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
+import net.minecraft.client.gui.screens.inventory.CraftingScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.world.inventory.ResultSlot;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-import net.minecraft.client.gui.screen.ingame.CraftingScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.screen.slot.CraftingResultSlot;
+import org.jetbrains.annotations.NotNull;
 
 import fi.dy.masa.malilib.config.ConfigUtils;
 import fi.dy.masa.malilib.config.IConfigBase;
@@ -31,8 +31,8 @@ public class Configs implements IConfigHandler
 {
     private static final String CONFIG_FILE_NAME = Reference.MOD_ID + ".json";
 
-    private static final ImmutableList<String> DEFAULT_TOP_SORTING = ImmutableList.of("minecraft:diamond_sword","minecraft:diamond_pickaxe","minecraft:diamond_axe","minecraft:diamond_shovel","minecraft:diamond_hoe","minecraft:netherite_sword","minecraft:netherite_pickaxe","minecraft:netherite_axe","minecraft:netherite_shovel","minecraft:netherite_hoe");
-    private static final ImmutableList<String> DEFAULT_BOTTOM_SORTING = ImmutableList.of();
+    private static final ImmutableList<@NotNull String> DEFAULT_TOP_SORTING = ImmutableList.of("minecraft:diamond_sword", "minecraft:diamond_pickaxe", "minecraft:diamond_axe", "minecraft:diamond_shovel", "minecraft:diamond_hoe", "minecraft:netherite_sword", "minecraft:netherite_pickaxe", "minecraft:netherite_axe", "minecraft:netherite_shovel", "minecraft:netherite_hoe");
+    private static final ImmutableList<@NotNull String> DEFAULT_BOTTOM_SORTING = ImmutableList.of();
 
     private static final String GENERIC_KEY = Reference.MOD_ID+".config.generic";
     public static class Generic
@@ -64,7 +64,7 @@ public class Configs implements IConfigHandler
         public static final ConfigOptionList SORT_METHOD_DEFAULT                = new ConfigOptionList("sortMethodDefault",                     SortingMethod.CATEGORY_NAME).apply(GENERIC_KEY);
         public static final ConfigLockedList SORT_CATEGORY_ORDER                = new ConfigLockedList("sortCategoryOrder",                     SortingCategory.INSTANCE).apply(GENERIC_KEY);
 
-        public static final ImmutableList<IConfigBase> OPTIONS = ImmutableList.of(
+        public static final ImmutableList<@NotNull IConfigBase> OPTIONS = ImmutableList.of(
                 CARPET_CTRL_Q_CRAFTING,
                 CLIENT_CRAFTING_FIX,
                 CRAFTING_RENDER_RECIPE_ITEMS,
@@ -110,7 +110,7 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean SHIFT_PLACE_ITEMS         = new ConfigBoolean("enableShiftPlaceItems",            true).apply(TOGGLES_KEY);
         public static final ConfigBoolean VILLAGER_TRADE_FEATURES   = new ConfigBoolean("enableVillagerTradeFeatures",      true).apply(TOGGLES_KEY);
 
-        public static final ImmutableList<IConfigValue> OPTIONS = ImmutableList.of(
+        public static final ImmutableList<@NotNull IConfigValue> OPTIONS = ImmutableList.of(
                 CRAFTING_FEATURES,
                 DROP_MATCHING,
                 RIGHT_CLICK_CRAFT_STACK,
@@ -159,9 +159,9 @@ public class Configs implements IConfigHandler
         CraftingHandler.clearDefinitions();
 
         // "net.minecraft.client.gui.inventory.GuiCrafting,net.minecraft.inventory.SlotCrafting,0,1-9", // vanilla Crafting Table
-        CraftingHandler.addCraftingGridDefinition(CraftingScreen.class.getName(), CraftingResultSlot.class.getName(), 0, new SlotRange(1, 9));
+        CraftingHandler.addCraftingGridDefinition(CraftingScreen.class.getName(), ResultSlot.class.getName(), 0, new SlotRange(1, 9));
         //"net.minecraft.client.gui.inventory.PlayerInventoryScreen,net.minecraft.inventory.SlotCrafting,0,1-4", // vanilla player inventory crafting grid
-        CraftingHandler.addCraftingGridDefinition(InventoryScreen.class.getName(), CraftingResultSlot.class.getName(), 0, new SlotRange(1, 4));
+        CraftingHandler.addCraftingGridDefinition(InventoryScreen.class.getName(), ResultSlot.class.getName(), 0, new SlotRange(1, 4));
 //        CraftingHandler.addCraftingGridDefinition(StonecutterScreen.class.getName(), Slot.class.getName(), 0, new SlotRange(1, 1));
         // TODO FIXME -- Stonecutter Screen (Slot numbering, etc) --> Doesn't work the same as the crafting grid
     }

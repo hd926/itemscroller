@@ -32,11 +32,12 @@
 		"mixins.itemscroller.json"
 	],
 	"accessWidener": "itemscroller.accesswidener",
+
 	"depends": {
-		"minecraft": ">=1.21.6 <=1.21.8",
-		"malilib": ">=0.25.3- <0.26.0-"
+		"minecraft": "1.21.11",
+		"malilib": ">=0.27.2- <0.28.0-"
 	},
 	"breaks": {
-		"malilib": "<0.25.3-"
+		"malilib": "<0.27.2-"
 	}
 }
