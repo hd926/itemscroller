@@ -2,15 +2,16 @@ package fi.dy.masa.itemscroller.util;
 
 import java.util.Collection;
 import java.util.Iterator;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 import com.google.common.collect.ImmutableList;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.StringIdentifiable;
+import org.jetbrains.annotations.NotNull;
 
 import fi.dy.masa.malilib.config.IConfigLockedListEntry;
 import fi.dy.masa.malilib.config.IConfigLockedListType;
@@ -20,45 +21,45 @@ import fi.dy.masa.itemscroller.Reference;
 public class SortingCategory implements IConfigLockedListType
 {
     public static final SortingCategory INSTANCE = new SortingCategory();
-    public ImmutableList<Entry> VALUES = ImmutableList.copyOf(Entry.values());
+    public ImmutableList<@NotNull Entry> VALUES = ImmutableList.copyOf(Entry.values());
     //public static final Codec<SortingCategory> CODEC = Entry.CODEC.listOf().xmap(getDefault);
 
     @Nullable
-    public ItemGroup.DisplayContext buildDisplayContext(MinecraftClient mc)
+    public CreativeModeTab.ItemDisplayParameters buildDisplayContext(Minecraft mc)
     {
-        if (mc.world == null)
+        if (mc.level == null)
         {
             return null;
         }
 
-        ItemGroup.DisplayContext ctx = new ItemGroup.DisplayContext(mc.world.getEnabledFeatures(), true, mc.world.getRegistryManager());
+        CreativeModeTab.ItemDisplayParameters ctx = new CreativeModeTab.ItemDisplayParameters(mc.level.enabledFeatures(), true, mc.level.registryAccess());
 
-        Registries.ITEM_GROUP.stream().filter((group) ->
-                group.getType() == ItemGroup.Type.CATEGORY).forEach((group) ->
-                group.updateEntries(ctx));
+        BuiltInRegistries.CREATIVE_MODE_TAB.stream().filter((group) ->
+                group.getType() == CreativeModeTab.Type.CATEGORY).forEach((group) ->
+                group.buildContents(ctx));
 
         return ctx;
     }
 
     public Entry fromItemStack(ItemStack stack)
     {
-        for (int i = 0; i < Registries.ITEM_GROUP.size(); i++)
+        for (int i = 0; i < BuiltInRegistries.CREATIVE_MODE_TAB.size(); i++)
         {
-            ItemGroup itemGroup = Registries.ITEM_GROUP.get(i);
+            CreativeModeTab itemGroup = BuiltInRegistries.CREATIVE_MODE_TAB.byId(i);
 
-            if (itemGroup != null && itemGroup.getType().equals(ItemGroup.Type.CATEGORY))
+            if (itemGroup != null && itemGroup.getType().equals(CreativeModeTab.Type.CATEGORY))
             {
                 Collection<ItemStack> stacks;
                 Iterator<ItemStack> iter;
 
-                if (itemGroup.hasStacks())
+                if (itemGroup.hasAnyItems())
                 {
-                    stacks = itemGroup.getDisplayStacks();
+                    stacks = itemGroup.getDisplayItems();
                     iter = stacks.iterator();
 
                     while (iter.hasNext())
                     {
-                        if (ItemStack.areItemsEqual(iter.next(), stack))
+                        if (ItemStack.isSameItem(iter.next(), stack))
                         {
                             return fromItemGroup(itemGroup);
                         }
@@ -66,12 +67,12 @@ public class SortingCategory implements IConfigLockedListType
 
                 }
 
-                stacks = itemGroup.getSearchTabStacks();
+                stacks = itemGroup.getSearchTabDisplayItems();
                 iter = stacks.iterator();
 
                 while (iter.hasNext())
                 {
-                    if (ItemStack.areItemsEqual(iter.next(), stack))
+                    if (ItemStack.isSameItem(iter.next(), stack))
                     {
                         return fromItemGroup(itemGroup);
                     }
@@ -84,9 +85,9 @@ public class SortingCategory implements IConfigLockedListType
     }
 
     @Nullable
-    public Entry fromItemGroup(ItemGroup group)
+    public Entry fromItemGroup(CreativeModeTab group)
     {
-        Identifier id = Registries.ITEM_GROUP.getId(group);
+        Identifier id = BuiltInRegistries.CREATIVE_MODE_TAB.getKey(group);
 
         if (id != null)
         {
@@ -97,9 +98,9 @@ public class SortingCategory implements IConfigLockedListType
     }
 
     @Override
-    public ImmutableList<IConfigLockedListEntry> getDefaultEntries()
+    public ImmutableList<@NotNull IConfigLockedListEntry> getDefaultEntries()
     {
-        ImmutableList.Builder<IConfigLockedListEntry> list = ImmutableList.builder();
+        ImmutableList.Builder<@NotNull IConfigLockedListEntry> list = ImmutableList.builder();
 
         VALUES.forEach((list::add));
 
@@ -113,7 +114,7 @@ public class SortingCategory implements IConfigLockedListType
         return Entry.fromString(string);
     }
 
-    public enum Entry implements IConfigLockedListEntry, StringIdentifiable
+    public enum Entry implements IConfigLockedListEntry, StringRepresentable
     {
         BUILDING_BLOCKS     ("building_blocks",     "building_blocks"),
         COLORED_BLOCKS      ("colored_blocks",      "colored_blocks"),
@@ -128,8 +129,8 @@ public class SortingCategory implements IConfigLockedListType
         OPERATOR            ("op_blocks",           "op_blocks"),
         OTHER               ("other",               "other");
 
-        public static final StringIdentifiable.EnumCodec<Entry> CODEC = StringIdentifiable.createCodec(Entry::values);
-        public static final ImmutableList<Entry> VALUES = ImmutableList.copyOf(values());
+        public static final StringRepresentable.EnumCodec<Entry> CODEC = StringRepresentable.fromEnum(Entry::values);
+        public static final ImmutableList<@NotNull Entry> VALUES = ImmutableList.copyOf(values());
 
         private final String configKey;
         private final String translationKey;
@@ -141,7 +142,7 @@ public class SortingCategory implements IConfigLockedListType
         }
 
         @Override
-        public String asString()
+        public @Nonnull String getSerializedName()
         {
             return this.configKey;
         }
